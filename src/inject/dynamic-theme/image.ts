@@ -13,6 +13,7 @@ export interface ImageDetails {
     isLight: boolean;
     isTransparent: boolean;
     isLarge: boolean;
+    isTooLarge: boolean;
 }
 
 export async function getImageDetails(url: string) {
@@ -69,6 +70,9 @@ function removeCanvas() {
     context = null;
 }
 
+// 5MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
 function analyzeImage(image: HTMLImageElement) {
     if (!canvas) {
         createCanvas();
@@ -85,13 +89,14 @@ function analyzeImage(image: HTMLImageElement) {
     // Is it over ~5MB? Let's not decode the image, it's something that's useless to analyze.
     // And very performance senstive for the browser to decode this image(~50ms) and take into account
     // It's being async `drawImage` calls.
-    if (size > 5000000) {
+    if (size > MAX_IMAGE_SIZE) {
         logInfo('Skipped large image analyzing(Larger than 5mb in memory)');
         return {
             isDark: false,
             isLight: false,
             isTransparent: false,
-            isLarge: true,
+            isLarge: false,
+            isTooLarge: true,
         };
     }
 
@@ -153,6 +158,7 @@ function analyzeImage(image: HTMLImageElement) {
         isLight: ((lightPixelsCount / opaquePixelsCount) >= LIGHT_IMAGE_THRESHOLD),
         isTransparent: ((transparentPixelsCount / totalPixelsCount) >= TRANSPARENT_IMAGE_THRESHOLD),
         isLarge: (naturalPixelsCount >= LARGE_IMAGE_PIXELS_COUNT),
+        isTooLarge: false,
     };
 }
 
